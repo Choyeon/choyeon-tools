@@ -4,14 +4,14 @@ Windows 硬件与系统配置查看器（WinUI 3 / .NET 10 桌面应用）。界
 
 ## 下载
 
-[Releases](../../releases/latest) 里有两个安装包：
+[Latest release](https://github.com/Choyeon/choyeon-tools/releases/latest) 里有两个安装包：
 
-- `Choyeon Tools.exe`（约 72 MB）—— 自包含单文件，双击即用，不需要装 .NET 运行时。推荐。
-- `choyeon-tools.msix`（约 48 MB）—— 带包身份的 MSIX，有开始菜单项和磁贴。它用自签名开发证书签名，直接双击装不上，需要先信任证书：
+- `ChoyeonTools.exe`（约 72 MB）—— 自包含单文件，双击即用，不需要装 .NET 运行时。推荐。
+- `ChoyeonTools-1.0.0-win-x64.msix`（约 48 MB）—— 带包身份的 MSIX，有开始菜单项和磁贴。它用自签名开发证书签名，直接双击装不上，需要先信任证书：
 
   ```powershell
   # 以管理员身份执行，证书在同一个 Release 里
-  Add-AppxPackage -CertificatePath .\choyeon-tools_cert.cer -PackagePath .\choyeon-tools.msix
+  Add-AppxPackage -CertificatePath .\ChoyeonTools-1.0.0-win-x64_cert.cer -PackagePath .\ChoyeonTools-1.0.0-win-x64.msix
   ```
 
   单独导入证书的话，把 `.cer` 装进 **本地计算机** 的 `受信任的人` 和 `受信任的根证书颁发机构`，或直接在 设置 → 系统 → 开发者选项 里开启侧载。
@@ -33,6 +33,7 @@ tools/                        仓库自带的构建与验证脚本，不参与�
   uia-*.ps1 verify-*.ps1      用 UIA 逐页取词、截图，验收界面渲染结果
   capture-window.ps1          按窗口截图
 .artifacts/                   验证脚本的转储与截图输出（已 gitignore，不入库）
+dist/                         发布产物 exe / msix / 证书（已 gitignore，只挂到 Release）
 ```
 
 ## 构建与运行
@@ -51,22 +52,22 @@ winapp run --detach -c Debug -p:PublishTrimmed=false
 dotnet publish -c Release -r win-x64
 ```
 
-自包含单文件 exe（约 72 MB，单个文件）。注意两点硬要求：`-p:AssemblyName` 决定 exe 名字，**发布后再改 exe 文件名会启动崩溃**；`PublishTrimmed` 必须为 false，WinUI/XAML/LibreHardwareMonitor/WMI 都依赖反射：
+自包含单文件 exe（约 72 MB，单个文件）。注意两点硬要求：**发布后再改 exe 文件名会启动崩溃**（`0xC000041D`，实测；exe 名由 `AssemblyName` 决定，要改名只能重新发布，界面显示名另有来源不受影响）；`PublishTrimmed` 必须为 false，WinUI/XAML/LibreHardwareMonitor/WMI 都依赖反射：
 
 ```
 dotnet publish -c Release -r win-x64 -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true `
-  -p:WindowsAppSdkUndockedRegFreeWinRTInitialize=true -p:AssemblyName="Choyeon Tools" --self-contained true `
+  -p:WindowsAppSdkUndockedRegFreeWinRTInitialize=true --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true `
-  -p:EnableCompressionInSingleFile=true -p:PublishTrimmed=false -o ../publish/win-x64-singlefile
+  -p:EnableCompressionInSingleFile=true -p:PublishTrimmed=false -o ../publish/singlefile
 ```
 
 MSIX 安装包用 `winapp package` 生成（`dotnet publish -p:WindowsPackageType=MSIX` 只发布松散文件，不会产出包）：
 
 ```
-winapp package ChoyeonTools.csproj -c Release --arch x64 --generate-cert --publisher "CN=AppPublisher" --output ../dist/choyeon-tools.msix
+winapp package ChoyeonTools.csproj -c Release --arch x64 --generate-cert --publisher "CN=AppPublisher" --output ../dist/ChoyeonTools-1.0.0-win-x64.msix
 ```
 
-`dist/` 连同里面的 `*_cert.pfx` 已在 `.gitignore` 里；对外分发只放导出的公钥 `.cer`，私钥不入库。
+`.msix` 可以随意改名，签名在包内。`dist/` 连同里面的 `*_cert.pfx` 已在 `.gitignore` 里；对外分发只放导出的公钥 `.cer`，私钥不入库。
 
 ## 数据来源
 
