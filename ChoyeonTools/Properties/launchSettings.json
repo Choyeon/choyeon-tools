@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ChoyeonTools (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "ChoyeonTools (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
